@@ -1,0 +1,848 @@
+# AIDC DEA Builder — Architecture Overview
+
+## Purpose
+
+The AIDC DEA Builder is a file-driven, multi-stage pipeline for creating **Deep Expert Agents (DEAs)**.
+
+It converts structured intent-capture material into a deployment-ready agent package through six explicit stages:
+
+1. **DEA Context Creation**
+2. **Expert Six Prompt Creation**
+3. **Expert Six Execution and Finalization**
+4. **Epistemic Anchor Creation**
+5. **EARL Agent Package Creation**
+6. **Target Deployment Packaging**
+
+The first implementation should remain intentionally simple:
+
+- local Python execution
+- Unix/macOS development environment
+- `uv` or Python virtual environment
+- file-based inputs and outputs from beginning to end
+- Azure-hosted inference through LiteLLM
+- GPT-5.5 as the preferred reasoning model for synthesis
+- GPT-5.5 Nano or equivalent fast model only for small mechanical tasks
+- deterministic orchestration around a small number of high-value model calls
+
+The system is designed first as a reliable local artifact factory. It can later evolve into a UI, hosted workflow, service, or broader agent-building platform, but the current architectural priority is to make each stage clear, inspectable, repeatable, and independently testable.
+
+---
+
+## Core Architectural Principle
+
+The system should separate **reasoning-heavy synthesis** from **mechanical orchestration**.
+
+Python should own:
+
+- directory setup
+- input validation
+- file placement
+- manifest creation
+- stage execution
+- model routing
+- trace capture
+- cost and token accounting
+- output validation
+- resumability
+- deterministic packaging
+
+The LLM should own:
+
+- synthesis
+- expert reasoning
+- context transformation
+- completeness review
+- instruction generation where judgment is required
+- alignment of generated artifacts with the DEA intent
+
+This pipeline is not an autonomous agent swarm. It is a deterministic build system that uses reasoning models at carefully chosen points.
+
+---
+
+## Key Learning from Epistemic Anchor Implementation
+
+The existing epistemic-anchor builder produced the most important architectural lesson so far.
+
+Three approaches were tested:
+
+| Approach | Result |
+|---|---|
+| Multi-stage pipeline | Overprocessed the material, increased cost, and produced poorer fragmented output |
+| Pure one-shot generation | Produced a coherent draft but required cleanup |
+| Two-pass generation | Produced the best result: holistic generation followed by context-aligned cleanup |
+
+The durable pattern is:
+
+```text
+Pass 0 — Holistic generation from all relevant context
+Pass 1 — Cleanup, completion, and alignment against the solution context
+```
+
+This pattern should be reused for reasoning-heavy synthesis stages, especially:
+
+- Expert Six prompt creation
+- Expert Six finalization
+- Epistemic anchor creation
+- EARL agent package creation
+
+The important negative lesson is also clear: do not break a reasoning-heavy synthesis task into many small template-filling calls unless the task is genuinely mechanical. That loses cross-reference quality, increases orchestration complexity, and can degrade output.
+
+---
+
+## Six-Stage Pipeline
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│  1. DEA Context Creation                                   │
+│  Why are we building this DEA, for whom, and for what use?  │
+└───────────────┬────────────────────────────────────────────┘
+                ▼
+┌────────────────────────────────────────────────────────────┐
+│  2. Expert Six Prompt Creation                             │
+│  Convert DEA context into a precise research prompt         │
+└───────────────┬────────────────────────────────────────────┘
+                ▼
+┌────────────────────────────────────────────────────────────┐
+│  3. Expert Six Execution and Finalization                   │
+│  Execute research, generate candidates, scrub to final six   │
+└───────────────┬────────────────────────────────────────────┘
+                ▼
+┌────────────────────────────────────────────────────────────┐
+│  4. Epistemic Anchor Creation                              │
+│  Create the deep reasoning substrate for the DEA             │
+└───────────────┬────────────────────────────────────────────┘
+                ▼
+┌────────────────────────────────────────────────────────────┐
+│  5. EARL Agent Package Creation                            │
+│  Create the canonical runtime-neutral agent package          │
+└───────────────┬────────────────────────────────────────────┘
+                ▼
+┌────────────────────────────────────────────────────────────┐
+│  6. Target Deployment Packaging                            │
+│  Adapt the EARL package for a specific runtime target        │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Stage 1 — DEA Context Creation
+
+### Purpose
+
+Stage 1 creates the **Deep Expert Agent Application Context**.
+
+This stage answers:
+
+```text
+Why are we building this DEA?
+Who will use it?
+What work should it help perform?
+What domain or operating context must it understand?
+What does success look like?
+What boundaries or non-goals matter?
+```
+
+This is the intent and requirements capture layer. It does **not** create the Expert Six prompt directly as its main output. It creates the context from which the Expert Six prompt will later be generated.
+
+### Inputs
+
+```text
+00_inputs/
+  questionnaire.md
+  questionnaire.yaml
+  supporting_docs/
+  samples/
+```
+
+The primary structured input is a **12-question DEA questionnaire**. Supporting documentation may include:
+
+- domain notes
+- example outputs
+- existing prompts
+- business context
+- user/operator descriptions
+- sample source material
+- prior related agent artifacts
+
+### Outputs
+
+```text
+01_dea_context/
+  dea_application_context.md
+  questionnaire_response.json
+  supporting_docs_manifest.json
+  execution_trace.json
+```
+
+### Notes
+
+This stage may be interactive or batch-driven. In the first implementation, it should be file-driven: the user supplies the completed 12-question questionnaire and supporting material, then the program synthesizes a clean DEA context document.
+
+A two-pass pattern is appropriate:
+
+```text
+Pass 0 — Generate the DEA application context
+Pass 1 — Clean, normalize, and align it with the questionnaire and supporting docs
+```
+
+The result should be clear enough that a later process can build a precise Expert Six prompt without re-asking the foundational intent questions.
+
+---
+
+## Stage 2 — Expert Six Prompt Creation
+
+### Purpose
+
+Stage 2 consumes the DEA application context and creates the **Expert Six research prompt**.
+
+This is a distinct stage because the Expert Six prompt must be explicit, detailed, and tuned to the intended DEA. It is not a generic research instruction. It is the research specification that determines which expert lenses will shape the eventual agent.
+
+This stage answers:
+
+```text
+What kinds of experts should be found?
+Which subdomains matter?
+What selection criteria should be used?
+What trade-offs should the research surface?
+What output format should the Expert Six result follow?
+How should alternates be identified?
+How should the experts be evaluated against the DEA context?
+```
+
+### Inputs
+
+```text
+01_dea_context/
+  dea_application_context.md
+
+00_inputs/
+  samples/
+    sample_expert_six_prompt.md   # optional
+```
+
+Optional supporting inputs may include:
+
+- previous high-quality Expert Six prompts
+- domain-specific selection criteria
+- known candidate experts to include or exclude
+- style and format templates
+
+### Outputs
+
+```text
+02_expert_six_prompt/
+  expert_six_research_prompt.md
+  prompt_build_notes.md
+  execution_trace.json
+```
+
+### Notes
+
+This stage should produce a research prompt that can be handed to a research engine, browser assistant, Claude Code research skill, or equivalent system.
+
+This prompt should be deliberately verbose and unambiguous. It should include:
+
+- DEA context summary
+- expert selection objectives
+- target expert categories
+- research depth expectations
+- required evidence style
+- required output format
+- alternate-candidate handling
+- final selection guidance
+- warnings against shallow fame-based selection
+
+The two-pass pattern is again appropriate:
+
+```text
+Pass 0 — Generate the Expert Six research prompt from DEA context
+Pass 1 — Tighten, clarify, and enforce the expected output template
+```
+
+---
+
+## Stage 3 — Expert Six Execution and Finalization
+
+### Purpose
+
+Stage 3 executes the Expert Six prompt and produces the final Expert Six document.
+
+This stage has two internal movements:
+
+```text
+3A — Execute the Expert Six research prompt
+3B — Scrub, rank, and finalize the Expert Six against the DEA context
+```
+
+Stage 3 should normally produce a richer candidate set first, then reduce that set to the final six experts. The intermediate set may include the initial six plus alternates.
+
+### Inputs
+
+```text
+01_dea_context/
+  dea_application_context.md
+
+02_expert_six_prompt/
+  expert_six_research_prompt.md
+
+03_expert_six/
+  selection_policy.yaml          # optional
+```
+
+Research tools may include:
+
+- Exa
+- Firecrawl
+- browser-assisted research
+- Claude Code research skill
+- GPT-5.5 or Claude synthesis
+
+### Outputs
+
+```text
+03_expert_six/
+  raw_research.md
+  candidate_experts.json
+  candidate_experts.md
+  alternates.md
+  expert_six_final.md
+  selection_rationale.md
+  source_manifest.json
+  execution_trace.json
+```
+
+### Notes
+
+This stage should be capable of both interactive and batch operation.
+
+In interactive mode, the system presents the candidate set, alternates, trade-offs, and context fit. The user may approve, reject, swap, or reprioritize experts.
+
+In batch mode, the system uses the DEA context and selection policy to produce the final Expert Six automatically.
+
+The final document should not merely list experts. It should explain:
+
+- why each expert belongs
+- what domain lens each contributes
+- what failure modes each helps avoid
+- where the experts complement or challenge each other
+- how the collective wisdom applies to the target DEA
+- which alternates were rejected and why
+
+This stage should preserve the same architectural lesson from the epistemic-anchor builder: do not overprocess the reasoning into many small calls. Use tools for search and source capture, then use holistic synthesis and one cleanup/alignment pass for finalization.
+
+---
+
+## Stage 4 — Epistemic Anchor Creation
+
+### Purpose
+
+Stage 4 creates the epistemic anchor: the deep reasoning substrate for the DEA.
+
+The epistemic anchor is not the agent itself. It is the rich domain, reasoning, operating, and judgment foundation from which the agent will later be built.
+
+### Inputs
+
+```text
+01_dea_context/
+  dea_application_context.md
+
+03_expert_six/
+  expert_six_final.md
+
+04_epistemic_anchor/
+  sources/
+    anchor_meta_prompt.md
+    anchor_template.md
+    sample_anchor.md
+```
+
+### Outputs
+
+```text
+04_epistemic_anchor/
+  output/
+    epistemic_anchor.md
+  working/
+    v0_raw.md
+    v1_optimized.md
+    manifest.json
+    execution_trace.json
+```
+
+### Notes
+
+This stage already has a proven implementation pattern.
+
+The recommended implementation is:
+
+```text
+Phase 1 — Ingest and validate source files
+Phase 2 — Generate and optimize
+```
+
+The model-call pattern should remain:
+
+```text
+Pass 0 — GPT-5.5 holistic generation from all source material
+Pass 1 — GPT-5.5 optimization and alignment pass
+```
+
+The goal is verbose, complete, internally consistent, and instructive output. Compression is not the objective.
+
+---
+
+## Stage 5 — EARL Agent Package Creation
+
+### Purpose
+
+Stage 5 creates the **EARL Agent Package**.
+
+EARL is the canonical runtime-neutral agent-definition package. It converts the epistemic anchor into an agent behavior contract and supporting artifacts, but it should not overfit to a particular deployment runtime.
+
+This stage answers:
+
+```text
+What is this agent?
+Who is it for?
+What does it do?
+What does it not do?
+How should it behave?
+What knowledge does it require?
+What tool policy applies?
+What safety boundaries matter?
+What examples should be used to evaluate it?
+```
+
+### Inputs
+
+```text
+04_epistemic_anchor/
+  output/
+    epistemic_anchor.md
+
+05_earl/
+  earl_context.md
+  earl_meta_prompt.md
+  agent_runtime_assumptions.yaml
+```
+
+### Outputs
+
+```text
+05_earl/
+  output/
+    earl_agent_package.md
+    canonical_system_prompt.md
+    agent_behavior_contract.md
+    knowledge_pack_manifest.json
+    tool_policy.md
+    safety_boundaries.md
+    eval_seed_set.md
+    deployment_assumptions.md
+  working/
+    v0_earl_raw.md
+    v1_earl_aligned.md
+    validation_report.json
+    execution_trace.json
+```
+
+### Notes
+
+EARL should produce the canonical definition of the agent’s intelligence, behavior, boundaries, and evaluation seeds.
+
+The correct boundary is:
+
+```text
+EARL = canonical agent behavior and knowledge package
+Deployment Packaging = runtime-specific adaptation
+```
+
+This separation preserves reversibility. If a deployment surface changes, only Stage 6 should need adjustment.
+
+---
+
+## Stage 6 — Target Deployment Packaging
+
+### Purpose
+
+Stage 6 adapts the completed EARL package for a target deployment scenario.
+
+This stage is intentionally thin in the architecture document. The specific target formats will evolve during implementation.
+
+Initial likely targets include:
+
+- ChatGPT Custom GPT
+- ChatGPT Assistant
+- Claude/Claude Opus project-style deployment
+- Gemma-based local or hosted deployment
+- Generic Agent Definition Language (ADL)
+
+### Inputs
+
+```text
+05_earl/
+  output/
+    earl_agent_package.md
+    canonical_system_prompt.md
+    knowledge_pack_manifest.json
+    tool_policy.md
+    safety_boundaries.md
+    eval_seed_set.md
+
+06_deployments/
+  deployment_profile.yaml
+```
+
+### Outputs
+
+```text
+06_deployments/
+  <target_name>/
+    packaged_agent_artifacts
+    validation_checklist.md
+    deployment_trace.json
+```
+
+### Notes
+
+Stage 6 should be implemented as an adapter layer.
+
+The architecture should define the adapter interface, not prematurely define every target package in detail.
+
+Each adapter should:
+
+```text
+1. validate EARL input compatibility
+2. apply target-specific constraints
+3. transform the canonical package
+4. write target-specific artifacts
+5. produce a validation checklist
+```
+
+The first concrete implementation should target the deployment surface currently in use. Other adapters should remain skeletal until real deployment constraints are known.
+
+---
+
+## Main Orchestrator
+
+The system needs an orchestrated main program that coordinates the full pipeline.
+
+The main program should:
+
+- initialize workspace directories
+- place input files into expected locations
+- validate stage prerequisites
+- execute Stage 1 through Stage 6 programs
+- skip completed stages when outputs are already valid
+- support forced re-run of one or more stages
+- write a top-level execution trace
+- surface costs, warnings, and missing inputs
+- preserve intermediate artifacts
+
+The orchestrator should not contain all stage logic directly. It should call stage modules with clear contracts.
+
+### Example CLI
+
+```bash
+uv run python -m aidc_builder run ./workspaces/<dea_name>
+```
+
+With target packaging:
+
+```bash
+uv run python -m aidc_builder run ./workspaces/<dea_name> --target chatgpt-custom-gpt
+```
+
+### Stage-Specific CLI
+
+```bash
+uv run python -m aidc_builder dea-context ./workspaces/<dea_name>
+uv run python -m aidc_builder expert-six-prompt ./workspaces/<dea_name>
+uv run python -m aidc_builder expert-six ./workspaces/<dea_name>
+uv run python -m aidc_builder anchor ./workspaces/<dea_name>
+uv run python -m aidc_builder earl ./workspaces/<dea_name>
+uv run python -m aidc_builder package ./workspaces/<dea_name> --target chatgpt-custom-gpt
+```
+
+### Planning Mode
+
+```bash
+uv run python -m aidc_builder plan ./workspaces/<dea_name>
+```
+
+Planning mode should report:
+
+- detected files
+- missing files
+- completed stages
+- runnable stages
+- blocked stages
+- estimated model calls
+- estimated cost
+- configured model routes
+- target deployment profile
+
+---
+
+## Workspace Layout
+
+```text
+workspaces/
+  <dea_name>/
+    00_inputs/
+      questionnaire.md
+      questionnaire.yaml
+      supporting_docs/
+      samples/
+
+    01_dea_context/
+      dea_application_context.md
+      questionnaire_response.json
+      supporting_docs_manifest.json
+      execution_trace.json
+
+    02_expert_six_prompt/
+      expert_six_research_prompt.md
+      prompt_build_notes.md
+      execution_trace.json
+
+    03_expert_six/
+      raw_research.md
+      candidate_experts.json
+      candidate_experts.md
+      alternates.md
+      expert_six_final.md
+      selection_rationale.md
+      source_manifest.json
+      execution_trace.json
+
+    04_epistemic_anchor/
+      sources/
+      output/
+        epistemic_anchor.md
+      working/
+        v0_raw.md
+        v1_optimized.md
+        manifest.json
+        execution_trace.json
+
+    05_earl/
+      output/
+        earl_agent_package.md
+        canonical_system_prompt.md
+        agent_behavior_contract.md
+        knowledge_pack_manifest.json
+        tool_policy.md
+        safety_boundaries.md
+        eval_seed_set.md
+        deployment_assumptions.md
+      working/
+        v0_earl_raw.md
+        v1_earl_aligned.md
+        validation_report.json
+        execution_trace.json
+
+    06_deployments/
+      <target_name>/
+        packaged_agent_artifacts
+        validation_checklist.md
+        deployment_trace.json
+
+    runs/
+      <timestamp>/
+        pipeline_trace.json
+        stage_summaries/
+```
+
+---
+
+## Shared Implementation Components
+
+The implementation should share common modules across all stage programs.
+
+```text
+aidc_builder/
+  cli/
+  orchestration/
+  stages/
+    dea_context.py
+    expert_six_prompt.py
+    expert_six.py
+    epistemic_anchor.py
+    earl.py
+    deployment_package.py
+  llm/
+  research/
+  io/
+  validation/
+  tracing/
+  cost/
+  config/
+  artifacts/
+```
+
+### Common Responsibilities
+
+```text
+llm/          LiteLLM wrapper, model routing, retry policy
+research/    Exa and Firecrawl integration
+io/          file loading, writing, directory conventions
+validation/  schema checks, required file checks, output checks
+tracing/     execution trace and model-call trace
+cost/        token and cost accounting
+config/      YAML configuration and environment resolution
+artifacts/   workspace and artifact management
+```
+
+---
+
+## Model Routing
+
+Model routing should be configuration-driven.
+
+Example:
+
+```yaml
+models:
+  synthesis: azure/gpt-5.5
+  cleanup: azure/gpt-5.5
+  fast: azure/gpt-5.5-nano
+
+routing:
+  dea_context:
+    generate: synthesis
+    cleanup: cleanup
+  expert_six_prompt:
+    generate: synthesis
+    cleanup: cleanup
+  expert_six:
+    synthesize: synthesis
+    finalize: cleanup
+  epistemic_anchor:
+    generate: synthesis
+    optimize: cleanup
+  earl:
+    generate: synthesis
+    align: cleanup
+  deployment_package:
+    transform: fast
+```
+
+The current experience indicates:
+
+- GPT-5.5 is preferred for major synthesis
+- GPT-5.5 Nano may be useful for quick validation and small transforms
+- Grok should not be a default model route based on current observed quality
+
+---
+
+## Execution Trace
+
+Every stage should emit a trace.
+
+A minimum trace should include:
+
+```json
+{
+  "stage": "expert_six_prompt",
+  "started_at": "...",
+  "completed_at": "...",
+  "status": "success",
+  "input_files": [],
+  "output_files": [],
+  "model_calls": [],
+  "token_estimates": {},
+  "cost_estimates": {},
+  "warnings": []
+}
+```
+
+The top-level orchestrator should also emit a pipeline trace that links all stage traces.
+
+This is required for cost visibility, reproducibility, debugging, and later quality improvement.
+
+---
+
+## Validation Strategy
+
+Validation should be deterministic wherever possible.
+
+Python should validate:
+
+- required directories
+- required files
+- YAML and JSON schema validity
+- minimum content length
+- expected headings
+- output artifact presence
+- known target profile names
+- stage dependency completion
+- trace existence
+
+The LLM should validate only judgment-heavy concerns, such as:
+
+- whether the Expert Six prompt is sufficiently specific
+- whether selected experts fit the DEA context
+- whether the epistemic anchor is instructive and complete
+- whether the EARL package is behaviorally coherent
+- whether deployment packaging lost critical meaning
+
+Do not ask a model to validate what code can validate.
+
+---
+
+## Current Implementation Priority
+
+The logical build order is:
+
+```text
+1. Workspace schema and orchestration skeleton
+2. Stage 1 — DEA Context Creation
+3. Stage 2 — Expert Six Prompt Creation
+4. Stage 3 — Expert Six Execution and Finalization
+5. Stage 4 — Epistemic Anchor Creation integration
+6. Stage 5 — EARL Agent Package Creation
+7. Stage 6 — Target Deployment Packaging for the first active target
+```
+
+The existing epistemic-anchor implementation should be integrated rather than redesigned. Its two-pass generate-and-optimize pattern is the strongest working reference in the system.
+
+---
+
+## Non-Goals for the First Implementation
+
+The first implementation should not attempt to build:
+
+- a web UI
+- a database-backed workflow system
+- a hosted service
+- Kubernetes deployment
+- multi-user collaboration
+- elaborate deployment adapters for every runtime
+- autonomous agent orchestration
+- custom model training
+- complex state management beyond files and traces
+
+Those can be considered later if the file-driven pipeline proves stable and useful.
+
+---
+
+## Architecture Summary
+
+The AIDC DEA Builder is a six-stage, file-driven artifact factory for creating Deep Expert Agents.
+
+The key design choices are:
+
+- use files as the source of truth
+- use a main orchestrator to run stage programs
+- separate DEA context creation from Expert Six prompt creation
+- execute and finalize the Expert Six as its own stage
+- preserve the proven two-pass synthesis pattern
+- keep EARL canonical and runtime-neutral
+- keep deployment packaging as a thin adapter layer
+- capture traces, costs, inputs, and outputs for every run
+- avoid premature UI, database, service, or deployment complexity
+
+The architecture should remain boring, explicit, and inspectable.
+
+That is the correct posture for building the full DEA lifecycle without burying the implementation under its own machinery.
