@@ -1,6 +1,7 @@
 # Expert Six Research Prompt — Generic Template
 
-> **Usage:** This template is paired with a domain-specific context document. The placeholders `{{TARGET_DOMAIN}}` and `{{RESEARCHER_DOMAIN}}` are filled by the upstream prompt-builder step before execution. `{{RESEARCHER_DOMAIN}}` is derived from the context document as the field surrounding `{{TARGET_DOMAIN}}` — broader than the target itself, narrow enough to carry domain-native authority signals (typically 2–4 comma-separated specializations).
+> **Version:** 1.1
+> **Usage:** This template is paired with a domain-specific context document. The placeholders `{{TARGET_DOMAIN}}` and `{{RESEARCHER_DOMAIN}}` are filled by the upstream prompt-builder step before execution. `{{RESEARCHER_DOMAIN}}` is a broad comma-separated list (6–8 specializations) covering the full scope of the domain — derived from Primary Knowledge Domains, Agent Deliverables, and format/channel expertise. Breadth is intentional; Stage 3 does the prioritization.
 
 ---
 

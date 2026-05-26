@@ -37,14 +37,15 @@ TEMPLATE_FILE = "expert_six_research_prompt_template.md"
 CONTEXT_DOC_NAME = "context_document.md"
 
 EXTRACT_SYSTEM = """\
-You are a field-extraction utility. Given a canonical context document for an \
-Expert Six agent specification, extract two fields:
+You are a field-extraction utility (v1.1). Given a canonical context document \
+for an Expert Six agent specification, extract two fields:
 
 1. TARGET_DOMAIN — the exact Domain Name from Section 1. Copy it verbatim.
-2. RESEARCHER_DOMAIN — the researcher's specialization field that surrounds \
-the target domain. This should be 2–4 comma-separated specializations, \
-specific enough to carry domain-native authority signals, derived directly \
-from the Primary Knowledge Domains (Section 4) and the Agent Role (Section 3).
+2. RESEARCHER_DOMAIN — a comma-separated list of 6–8 specializations that \
+represent the full breadth of the domain. Derive from Primary Knowledge \
+Domains (Section 4), Agent Deliverables (Section 3), and any format-specific \
+or channel-specific expertise implied by the context. Cover the complete scope \
+— do not summarize or collapse into broad categories.
 
 Output ONLY these two lines, nothing else:
 TARGET_DOMAIN: <value>
@@ -110,7 +111,7 @@ def load_inputs(state: PipelineState) -> dict:
 def extract_fields(state: PipelineState) -> dict:
     """Pass 0 — Extract TARGET_DOMAIN and RESEARCHER_DOMAIN from context doc."""
     tracker: TokenTracker = state["tracker"]
-    llm = get_llm("worker-bee", callbacks=[tracker])
+    llm = get_llm("general", callbacks=[tracker])
 
     response = llm.invoke([
         SystemMessage(content=EXTRACT_SYSTEM),

@@ -1,26 +1,26 @@
 {
   "stage": 2,
-  "elapsed_seconds": 17.3,
+  "elapsed_seconds": 16.8,
   "target_domain": "Founder-led executive communications and brand copywriting for enterprise AI, deep expert agents, AI training datasets, and AI deployment at scale",
-  "researcher_domain": "executive ghostwriting for founder-CEOs, founder-led brand voice development, enterprise AI thought leadership copywriting, editorial redlining and claim discipline",
-  "estimated_cost_usd": 0.0016,
+  "researcher_domain": "Executive ghostwriting for founder-CEOs in credible first-person voice, Founder-led brand voice development for early-stage companies, Enterprise thought leadership strategy for technical and executive audiences, AI agents deep expert agents AI training datasets and AI deployment-at-scale communication, Technical product copywriting that translates complex concepts into plain language, Press-release writing with disciplined corporate structure and founder-led clarity, Blog website post and LinkedIn copywriting across distinct format standards, Editorial judgment redlining brand credibility protection and claim discipline, Organic content traction discoverability hooks and crawlable content structure, Avoidance of AI-sounding language hype vague abstraction and generic corporate filler",
+  "estimated_cost_usd": 0.0036,
   "token_records": [
     {
-      "model": "gpt-5.4-nano",
-      "tier": "worker-bee",
-      "prompt_tokens": 3041,
-      "completion_tokens": 66,
-      "total_tokens": 3107,
-      "latency_s": 1.618,
+      "model": "grok-4-1-fast-non-reasoning",
+      "tier": "general",
+      "prompt_tokens": 2992,
+      "completion_tokens": 154,
+      "total_tokens": 3146,
+      "latency_s": 1.769,
       "node": ""
     },
     {
       "model": "gpt-5.4-nano",
       "tier": "worker-bee",
-      "prompt_tokens": 5053,
-      "completion_tokens": 1984,
-      "total_tokens": 7037,
-      "latency_s": 15.521,
+      "prompt_tokens": 5331,
+      "completion_tokens": 2262,
+      "total_tokens": 7593,
+      "latency_s": 14.867,
       "node": ""
     }
   ],
