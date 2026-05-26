@@ -49,6 +49,7 @@ Automate the full lifecycle of creating a deep expert agent — from "why do we 
 - **Research:** Exa (search), Firecrawl (extraction)
 - **Framework:** LangGraph StateGraph for stage internals
 - **Proven pattern:** Stage 4 (Epistemic Anchor) ported from AIDC_Agent_Builder
+- **Stage 1 prompts:** Context Normalizer Agent Prompt + Hardened Template (runtime, packaged)
 
 ## Constraints
 
@@ -68,6 +69,9 @@ Automate the full lifecycle of creating a deep expert agent — from "why do we 
 | GPT-5.5 for synthesis, Nano for mechanical | Cost optimization with quality preservation | Active |
 | File-driven, no database | Inspectable, reproducible, simple | Active |
 | EARL as runtime-neutral layer | Decouples agent definition from deployment target | Active |
+| Context Normalizer + Hardened Template | Stage 1 uses hardened LLM prompt with explicit output contract | Active |
+| Structured error handling | Normalizer returns parseable ERROR with missing fields / conflicts | Active |
+| Clean pipeline boundaries | Each stage output is sole input to next; no source content carried forward | Active |
 
 ---
-*Last updated: 2026-05-20*
+*Last updated: 2026-05-26*

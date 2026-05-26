@@ -19,9 +19,9 @@ The first implementation should remain intentionally simple:
 - Unix/macOS development environment
 - `uv` or Python virtual environment
 - file-based inputs and outputs from beginning to end
-- Azure-hosted inference through LiteLLM
+- direct Azure Cognitive Services inference (no LiteLLM proxy)
 - GPT-5.5 as the preferred reasoning model for synthesis
-- GPT-5.5 Nano or equivalent fast model only for small mechanical tasks
+- GPT-5.4-nano or equivalent fast model only for small mechanical tasks
 - deterministic orchestration around a small number of high-value model calls
 
 The system is designed first as a reliable local artifact factory. It can later evolve into a UI, hosted workflow, service, or broader agent-building platform, but the current architectural priority is to make each stage clear, inspectable, repeatable, and independently testable.
@@ -148,42 +148,46 @@ This is the intent and requirements capture layer. It does **not** create the Ex
 
 ```text
 00_inputs/
-  questionnaire.md
-  questionnaire.yaml
-  supporting_docs/
-  samples/
+  <any combination of input files>
 ```
 
-The primary structured input is a **12-question DEA questionnaire**. Supporting documentation may include:
+Stage 1 accepts **heterogeneous context inputs** in any combination:
 
-- domain notes
-- example outputs
-- existing prompts
-- business context
-- user/operator descriptions
-- sample source material
-- prior related agent artifacts
+- Intake worksheet (structured Q&A, e.g., Expert Six Worksheet v3)
+- Interview transcript
+- Agentic specification (a manager agent's sub-agent role description)
+- Free-form document (notes, briefs, written context)
+- Direct specification (context fields written directly)
+
+At least one input must provide enough information to populate all required fields of the Hardened Template.
 
 ### Outputs
 
 ```text
 01_dea_context/
-  dea_application_context.md
-  questionnaire_response.json
-  supporting_docs_manifest.json
-  execution_trace.json
+  output/
+    context_document.md               # Canonical context document (Hardened Template)
+  working/
+    v0_normalized.md
+    v1_reviewed.md
+    execution_trace.json
 ```
 
 ### Notes
 
-This stage may be interactive or batch-driven. In the first implementation, it should be file-driven: the user supplies the completed 12-question questionnaire and supporting material, then the program synthesizes a clean DEA context document.
+Stage 1 uses the **Context Normalizer** — a hardened LLM prompt that converts heterogeneous inputs into a canonical context document conforming exactly to a 12-section Hardened Template. The normalizer produces one of two outputs:
 
-A two-pass pattern is appropriate:
+- **Success:** Canonical context document. No deviations from template structure.
+- **Failure:** Structured error itemizing missing fields and/or unresolved conflicts, with a recovery directive.
+
+The pipeline pattern is:
 
 ```text
-Pass 0 — Generate the DEA application context
-Pass 1 — Clean, normalize, and align it with the questionnaire and supporting docs
+Pass 0 — Normalize: Context Normalizer prompt + Hardened Template → canonical document (or structured failure)
+Pass 1 — Review: cross-check for internal consistency, sharpen for downstream LLM consumption
 ```
+
+Source content is NOT carried forward to downstream stages. The canonical context document is the sole interface between Stage 1 and Stage 2+. Raw inputs remain in `00_inputs/` for audit.
 
 The result should be clear enough that a later process can build a precise Expert Six prompt without re-asking the foundational intent questions.
 
@@ -590,16 +594,15 @@ Planning mode should report:
 workspaces/
   <dea_name>/
     00_inputs/
-      questionnaire.md
-      questionnaire.yaml
-      supporting_docs/
-      samples/
+      <heterogeneous input files>
 
     01_dea_context/
-      dea_application_context.md
-      questionnaire_response.json
-      supporting_docs_manifest.json
-      execution_trace.json
+      output/
+        context_document.md
+      working/
+        v0_normalized.md
+        v1_reviewed.md
+        execution_trace.json
 
     02_expert_six_prompt/
       expert_six_research_prompt.md
@@ -684,7 +687,7 @@ aidc_builder/
 ### Common Responsibilities
 
 ```text
-llm/          LiteLLM wrapper, model routing, retry policy
+llm/          Azure OpenAI client, tiered model routing, retry policy
 research/    Exa and Firecrawl integration
 io/          file loading, writing, directory conventions
 validation/  schema checks, required file checks, output checks

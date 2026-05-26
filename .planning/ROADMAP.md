@@ -2,21 +2,22 @@
 
 **Project:** Deep Expert Agent Builder
 **Milestone:** v1.0
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-26
 
 ## Phase 1: DEA Context Creation
 
-**Goal:** Convert a 12-question questionnaire + supporting docs into a clean DEA application context document.
+**Goal:** Normalize heterogeneous context inputs into a canonical context document conforming to the 12-section Hardened Template.
 
 **Delivers:**
-- Workspace scaffolding (`00_inputs/`, `01_dea_context/`)
-- Questionnaire ingestion (markdown + YAML)
-- Supporting docs manifest
-- Two-pass synthesis: generate context → clean/align
-- Output: `01_dea_context/dea_application_context.md`
+- Context Normalizer pipeline (hardened LLM prompt + template)
+- Heterogeneous input handling (worksheets, transcripts, specs, notes, direct)
+- Structured error handling (parseable failure output with missing fields / conflicts)
+- Two-pass pipeline: normalize → review/refine
+- Clean pipeline boundary: no source content carried downstream
+- Output: `01_dea_context/output/context_document.md`
 - Execution trace
 
-**Status:** not started
+**Status:** planned (plan written, ready to build)
 
 ---
 
