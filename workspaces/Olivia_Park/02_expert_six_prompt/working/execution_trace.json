@@ -1,0 +1,28 @@
+{
+  "stage": 2,
+  "elapsed_seconds": 17.3,
+  "target_domain": "Founder-led executive communications and brand copywriting for enterprise AI, deep expert agents, AI training datasets, and AI deployment at scale",
+  "researcher_domain": "executive ghostwriting for founder-CEOs, founder-led brand voice development, enterprise AI thought leadership copywriting, editorial redlining and claim discipline",
+  "estimated_cost_usd": 0.0016,
+  "token_records": [
+    {
+      "model": "gpt-5.4-nano",
+      "tier": "worker-bee",
+      "prompt_tokens": 3041,
+      "completion_tokens": 66,
+      "total_tokens": 3107,
+      "latency_s": 1.618,
+      "node": ""
+    },
+    {
+      "model": "gpt-5.4-nano",
+      "tier": "worker-bee",
+      "prompt_tokens": 5053,
+      "completion_tokens": 1984,
+      "total_tokens": 7037,
+      "latency_s": 15.521,
+      "node": ""
+    }
+  ],
+  "context_document_source": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park/01_dea_context/output/context_document.md"
+}

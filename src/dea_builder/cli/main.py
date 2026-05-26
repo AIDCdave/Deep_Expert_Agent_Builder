@@ -20,6 +20,8 @@ def main() -> None:
 
     if command == "dea-context":
         _run_dea_context(args[1:])
+    elif command == "expert-six-prompt":
+        _run_expert_six_prompt(args[1:])
     else:
         console.print(f"[red]Unknown command:[/red] {command}")
         _print_usage()
@@ -32,6 +34,7 @@ def _print_usage() -> None:
         "\n[bold]DEA Builder[/bold] — Deep Expert Agent pipeline\n\n"
         "[bold]Usage:[/bold]\n"
         "  dea-builder dea-context <workspace_path>\n"
+        "  dea-builder expert-six-prompt <workspace_path>\n"
         "\n"
         "[bold]Stages:[/bold]\n"
         "  dea-context       Stage 1 — Normalize inputs into canonical context document\n"
@@ -71,4 +74,29 @@ def _run_dea_context(args: list[str]) -> None:
             "\n[yellow]Resolution:[/yellow] Add the missing information to "
             "00_inputs/ and re-run."
         )
+        sys.exit(2)
+
+
+def _run_expert_six_prompt(args: list[str]) -> None:
+    """Run Stage 2 — Expert Six Prompt Creation."""
+    if not args:
+        console.print("[red]Error:[/red] workspace path required")
+        console.print("  Usage: dea-builder expert-six-prompt <workspace_path>")
+        sys.exit(1)
+
+    workspace_path = Path(args[0]).resolve()
+
+    if not workspace_path.is_dir():
+        console.print(f"[red]Error:[/red] workspace not found: {workspace_path}")
+        sys.exit(1)
+
+    from dea_builder.stages.expert_six_prompt import run_stage
+
+    try:
+        run_stage(workspace_path)
+    except FileNotFoundError as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(1)
+    except ValueError as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
         sys.exit(2)
