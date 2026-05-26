@@ -23,16 +23,16 @@
 
 ## Phase 2: Expert Six Prompt Creation
 
-**Goal:** Transform DEA application context into a precise, verbose Expert Six research prompt.
+**Goal:** Fill the generic Expert Six Research Prompt template with domain-specific fields extracted from the Stage 1 context document.
 
 **Delivers:**
-- DEA context ingestion
-- Two-pass synthesis: generate prompt → tighten/clarify
-- Output: `02_expert_six_prompt/expert_six_research_prompt.md`
-- Prompt build notes
+- Generic template + domain field extraction (TARGET_DOMAIN, RESEARCHER_DOMAIN)
+- Two-pass pipeline: extract fields → review coherence
+- Self-contained output: filled research prompt + versioned context document copy
+- Output: `02_expert_six_prompt/output/expert_six_research_prompt.md` + `context_document.md`
 - Execution trace
 
-**Status:** not started
+**Status:** complete
 
 ---
 
