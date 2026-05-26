@@ -95,6 +95,8 @@ Before producing the success output, run these checks:
 - No vague placeholders ("TBD", "various", "TBA", "to be determined") remain
 - Domain-specific exclusions (Section 10) are stated even if minimal
 
+**Optional-field handling:** Section 8 Company/Project Name is optional. For portable, generalized, or company-agnostic agents, accept `Not Applicable — Generalized Agent` (or equivalent explicit non-answer) as a valid populated value. Do not flag as missing.
+
 If any check fails, return to Step 3 and emit the corresponding failure output.
 
 ### Step 6: Emit

@@ -1,0 +1,51 @@
+{
+  "stage": "dea_context",
+  "stage_num": 1,
+  "workspace": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/_test_stage1",
+  "status": "success",
+  "total_latency_s": 76.48707818984985,
+  "input_files": [
+    "completed_intake_worksheet.md"
+  ],
+  "output_files": [
+    "output/context_document.md"
+  ],
+  "working_files": [
+    "v0_normalized.md",
+    "v1_reviewed.md"
+  ],
+  "passes": [
+    {
+      "node": "normalize",
+      "status": "success",
+      "latency_s": 40.221513986587524,
+      "tokens": [
+        {
+          "model": "gpt-5.5",
+          "tier": "reasoning",
+          "prompt_tokens": 3843,
+          "completion_tokens": 2384,
+          "total_tokens": 6227,
+          "latency_s": 40.221,
+          "node": ""
+        }
+      ]
+    },
+    {
+      "node": "review",
+      "status": "success",
+      "latency_s": 35.4907431602478,
+      "tokens": [
+        {
+          "model": "gpt-5.5",
+          "tier": "reasoning",
+          "prompt_tokens": 2178,
+          "completion_tokens": 2714,
+          "total_tokens": 4892,
+          "latency_s": 35.49,
+          "node": ""
+        }
+      ]
+    }
+  ]
+}

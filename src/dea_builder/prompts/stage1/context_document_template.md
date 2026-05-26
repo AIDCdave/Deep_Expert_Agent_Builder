@@ -1,6 +1,6 @@
 # Canonical Context Document — Expert Six Agent Specification
 
-> **Version:** 1.0
+> **Version:** 1.1
 > **Purpose:** This template defines the exact contract the Context Normalizer must produce. The output of this template pairs with the Expert Six Research Prompt template to drive identification of the Foundational Six experts for agent construction.
 > **Scope:** This template is purpose-built for Expert Six runs that feed agent specification and programming. Section 3 (Agent Definition) is non-negotiable.
 
@@ -10,9 +10,9 @@
 
 - **Domain:** [target domain name]
 - **Date:** [date of context document creation]
-- **Requester:** [name and organization]
+- **Requester:** [canonical format: `Name <email@domain.com>` (e.g., `Dave Drach <dave@aidc.com>`). Email-only acceptable as fallback. This field is required for provenance and audit.]
 - **Input Source:** [intake worksheet | interview transcript | agentic specification | free-form document | direct specification | combination — specify]
-- **Normalizer Version:** 1.0
+- **Normalizer Version:** 1.1
 
 ---
 
@@ -86,7 +86,7 @@
 
 ## 8. Business Context
 
-- **Company / Project Name:** [name; include any naming rules — what to use, what NOT to use]
+- **Company / Project Name:** *(Optional — required only when the agent operates within a specific company context. For portable, generalized, or company-agnostic agents, state `Not Applicable — Generalized Agent`.)* [name; include any naming rules — what to use, what NOT to use]
 - **Business Model:** [one or two sentences]
 - **Key Platforms, Tools, Ecosystems:** [list of platforms, frameworks, infrastructure, or ecosystems the agent operates within]
 - **Target Customer or Buyer Profile:** [if relevant to the agent's work]

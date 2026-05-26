@@ -1,0 +1,51 @@
+{
+  "stage": "dea_context",
+  "stage_num": 1,
+  "workspace": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park",
+  "status": "success",
+  "total_latency_s": 82.86694407463074,
+  "input_files": [
+    "Agent_Context_Intake_Raw_Input_Package__Olivia_Park__Updated_v2.md"
+  ],
+  "output_files": [
+    "output/context_document.md"
+  ],
+  "working_files": [
+    "v0_normalized.md",
+    "v1_reviewed.md"
+  ],
+  "passes": [
+    {
+      "node": "normalize",
+      "status": "success",
+      "latency_s": 46.56624984741211,
+      "tokens": [
+        {
+          "model": "gpt-5.5",
+          "tier": "reasoning",
+          "prompt_tokens": 6553,
+          "completion_tokens": 2984,
+          "total_tokens": 9537,
+          "latency_s": 46.566,
+          "node": ""
+        }
+      ]
+    },
+    {
+      "node": "review",
+      "status": "success",
+      "latency_s": 36.11600160598755,
+      "tokens": [
+        {
+          "model": "gpt-5.5",
+          "tier": "reasoning",
+          "prompt_tokens": 2674,
+          "completion_tokens": 3339,
+          "total_tokens": 6013,
+          "latency_s": 36.116,
+          "node": ""
+        }
+      ]
+    }
+  ]
+}
