@@ -1,0 +1,61 @@
+{
+  "stage": 3,
+  "elapsed_seconds": 319.3,
+  "estimated_cost_usd": 0.331,
+  "passes": {
+    "pass0_query": "Practitioners who publish deep long-form methodology on founder-CEO executive ghostwriting, founder-led brand voice, enterprise AI thought leadership, technical product copywriting for complex AI agents and datasets, disciplined press-release writing, editorial redlining for claim discipline and anti-hype credibility, and organic discoverability for B2B technical audiences across blogs, websites, LinkedIn, and corporate announcements",
+    "pass0_exa_results": 20,
+    "pass1_first_cut_length": 25133,
+    "pass2_gaps_found": 5,
+    "pass2_targeted_results": 50,
+    "pass2_urls_scraped": 15,
+    "pass2_urls_verified": 12
+  },
+  "token_records": [
+    {
+      "model": "gpt-5.5",
+      "tier": "reasoning",
+      "prompt_tokens": 5293,
+      "completion_tokens": 175,
+      "total_tokens": 5468,
+      "latency_s": 3.796,
+      "node": ""
+    },
+    {
+      "model": "gpt-5.5",
+      "tier": "reasoning",
+      "prompt_tokens": 12447,
+      "completion_tokens": 8559,
+      "total_tokens": 21006,
+      "latency_s": 109.988,
+      "node": ""
+    },
+    {
+      "model": "gpt-5.5",
+      "tier": "reasoning",
+      "prompt_tokens": 8254,
+      "completion_tokens": 1114,
+      "total_tokens": 9368,
+      "latency_s": 14.589,
+      "node": ""
+    },
+    {
+      "model": "gpt-5.5",
+      "tier": "reasoning",
+      "prompt_tokens": 29333,
+      "completion_tokens": 6127,
+      "total_tokens": 35460,
+      "latency_s": 73.065,
+      "node": ""
+    },
+    {
+      "model": "gpt-5.5",
+      "tier": "reasoning",
+      "prompt_tokens": 7165,
+      "completion_tokens": 4626,
+      "total_tokens": 11791,
+      "latency_s": 42.326,
+      "node": ""
+    }
+  ]
+}
