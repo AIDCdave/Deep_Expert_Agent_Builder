@@ -31,9 +31,15 @@ from typing import Annotated, Any, TypedDict
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
 
+from rich.console import Console
+from rich.panel import Panel
+
 from dea_builder.cost.tracker import TokenTracker, estimate_cost
+from dea_builder.io.workspace import STAGE_NAMES, ensure_stage_dirs, load_prompt
 from dea_builder.llm.client import get_llm
 from dea_builder.research.firecrawl import load_cached_extractions
+
+console = Console()
 
 
 # ---------------------------------------------------------------------------
@@ -409,3 +415,109 @@ def run_stage(
     )
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Manifest generation + pipeline wrapper (for CLI integration)
+# ---------------------------------------------------------------------------
+
+STAGE_NUM = 4
+
+
+def _prepare_manifest(workspace_dir: Path) -> Path:
+    """Build manifest.json from upstream outputs and bundled source prompts.
+
+    Assembles:
+      - Context document from Stage 1 output
+      - Expert Six from Stage 3 output
+      - anchor_meta_prompt.md, anchor_template.md, anchor_sample.md from prompts/stage4
+    """
+    ws = Path(workspace_dir)
+    _, working_dir = ensure_stage_dirs(ws, STAGE_NUM)
+
+    # Upstream files
+    context_path = ws / STAGE_NAMES[1] / "output" / "context_document.md"
+    expert_six_path = ws / STAGE_NAMES[3] / "output" / "expert_six_final.md"
+
+    if not context_path.is_file():
+        raise FileNotFoundError(f"Context document not found: {context_path}")
+    if not expert_six_path.is_file():
+        raise FileNotFoundError(f"Expert Six not found: {expert_six_path}")
+
+    # Bundled prompt sources — copy to sources/ for traceability
+    sources_dir = ws / STAGE_NAMES[4] / "sources"
+    sources_dir.mkdir(parents=True, exist_ok=True)
+
+    source_map = {
+        "anchor_meta_prompt.md": "anchor_meta_prompt.md",
+        "anchor_template.md": "anchor_template.md",
+        "anchor_sample.md": "anchor_sample.md",
+    }
+    for dest_name, prompt_name in source_map.items():
+        content = load_prompt(STAGE_NUM, prompt_name)
+        dest = sources_dir / dest_name
+        dest.write_text(content, encoding="utf-8")
+
+    # Build manifest
+    files = {}
+    all_sources = {
+        "context_document.md": context_path,
+        "expert_six_final.md": expert_six_path,
+        "anchor_meta_prompt.md": sources_dir / "anchor_meta_prompt.md",
+        "anchor_template.md": sources_dir / "anchor_template.md",
+        "anchor_sample.md": sources_dir / "anchor_sample.md",
+    }
+    for fname, fpath in all_sources.items():
+        files[fname] = {
+            "path": str(fpath),
+            "exists": fpath.is_file(),
+        }
+
+    manifest = {"stage": STAGE_NUM, "files": files}
+    manifest_path = working_dir / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    return manifest_path
+
+
+def run_pipeline(workspace_dir: Path) -> Path:
+    """Full Stage 4 pipeline: prepare manifest → generate → optimize.
+
+    Returns path to the final epistemic anchor output.
+    """
+    console.print(
+        Panel("Stage 4 — Epistemic Anchor Creation", style="bold cyan")
+    )
+
+    ws = Path(workspace_dir)
+    t0 = time.time()
+
+    # Prepare
+    console.print("Assembling inputs from upstream stages...")
+    manifest_path = _prepare_manifest(ws)
+    console.print(f"  Manifest: {manifest_path.relative_to(ws)}")
+
+    # Run existing pipeline
+    console.print("\n[bold]Pass 0:[/bold] Generating epistemic anchor (GPT-5.5)...")
+    result = run_stage(ws)
+
+    # Extract trace info
+    trace_records = result.get("trace_records", [])
+    elapsed = time.time() - t0
+    total_cost = sum(r.get("cost_usd", 0) for r in trace_records)
+
+    # Output path
+    output_path = ws / STAGE_NAMES[4] / "output" / "epistemic_anchor.md"
+
+    console.print(
+        Panel(
+            f"Total time: {elapsed:.1f}s\n"
+            f"Estimated cost: ${total_cost:.4f}\n"
+            f"Passes: {len(trace_records)}\n"
+            f"Output: {output_path.relative_to(ws.parent) if ws.parent in output_path.parents else output_path}",
+            title="Stage 4 Complete",
+            style="bold green",
+        )
+    )
+
+    return output_path

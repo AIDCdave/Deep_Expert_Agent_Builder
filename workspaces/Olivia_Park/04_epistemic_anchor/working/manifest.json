@@ -1,0 +1,25 @@
+{
+  "stage": 4,
+  "files": {
+    "context_document.md": {
+      "path": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park/01_dea_context/output/context_document.md",
+      "exists": true
+    },
+    "expert_six_final.md": {
+      "path": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park/03_expert_six/output/expert_six_final.md",
+      "exists": true
+    },
+    "anchor_meta_prompt.md": {
+      "path": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park/04_epistemic_anchor/sources/anchor_meta_prompt.md",
+      "exists": true
+    },
+    "anchor_template.md": {
+      "path": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park/04_epistemic_anchor/sources/anchor_template.md",
+      "exists": true
+    },
+    "anchor_sample.md": {
+      "path": "/Users/davedrach/Deep_Expert_Agent_Builder/workspaces/Olivia_Park/04_epistemic_anchor/sources/anchor_sample.md",
+      "exists": true
+    }
+  }
+}

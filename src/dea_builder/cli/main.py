@@ -24,6 +24,8 @@ def main() -> None:
         _run_expert_six_prompt(args[1:])
     elif command == "expert-six":
         _run_expert_six(args[1:])
+    elif command == "anchor":
+        _run_anchor(args[1:])
     else:
         console.print(f"[red]Unknown command:[/red] {command}")
         _print_usage()
@@ -121,6 +123,31 @@ def _run_expert_six(args: list[str]) -> None:
 
     try:
         run_stage(workspace_path)
+    except FileNotFoundError as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(1)
+    except (ValueError, EnvironmentError) as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(2)
+
+
+def _run_anchor(args: list[str]) -> None:
+    """Run Stage 4 — Epistemic Anchor Creation."""
+    if not args:
+        console.print("[red]Error:[/red] workspace path required")
+        console.print("  Usage: dea-builder anchor <workspace_path>")
+        sys.exit(1)
+
+    workspace_path = Path(args[0]).resolve()
+
+    if not workspace_path.is_dir():
+        console.print(f"[red]Error:[/red] workspace not found: {workspace_path}")
+        sys.exit(1)
+
+    from dea_builder.stages.epistemic_anchor import run_pipeline
+
+    try:
+        run_pipeline(workspace_path)
     except FileNotFoundError as exc:
         console.print(f"\n[red]Error:[/red] {exc}")
         sys.exit(1)

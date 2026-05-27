@@ -1,0 +1,24 @@
+[
+  {
+    "node": "generate_anchor",
+    "tier": "reasoning",
+    "model": "gpt-5.5",
+    "latency_s": 148.22,
+    "output_chars": 56477,
+    "prompt_tokens": 23059,
+    "completion_tokens": 11998,
+    "total_tokens": 35057,
+    "cost_usd": 0.1661
+  },
+  {
+    "node": "optimize_anchor",
+    "tier": "reasoning",
+    "model": "gpt-5.5",
+    "latency_s": 165.09,
+    "output_chars": 82566,
+    "prompt_tokens": 11716,
+    "completion_tokens": 17827,
+    "total_tokens": 29543,
+    "cost_usd": 0.2017
+  }
+]
