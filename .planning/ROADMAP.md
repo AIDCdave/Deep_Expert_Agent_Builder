@@ -41,14 +41,15 @@
 **Goal:** Execute research, generate candidate experts, scrub to final Expert Six with rationale.
 
 **Delivers:**
-- Research execution (Exa + Firecrawl integration)
-- Candidate generation and ranking
-- Interactive or batch finalization
-- Output: `03_expert_six/expert_six_final.md`
-- Selection rationale, alternates, source manifest
-- Execution trace
+- 4-pass pipeline: query gen → first cut → gap analysis + refine → audit
+- Exa semantic search (holistic + gap-targeted queries)
+- Firecrawl source verification
+- GPT-5.5 reasoning for all synthesis passes
+- Self-contained output: `03_expert_six/output/expert_six_final.md` + `context_document.md`
+- Selection rationale, alternates, coverage map, audit notes
+- Full working trace per pass
 
-**Status:** not started
+**Status:** complete
 
 ---
 
