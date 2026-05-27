@@ -687,7 +687,7 @@ aidc_builder/
 ### Common Responsibilities
 
 ```text
-llm/          Azure OpenAI client, tiered model routing, retry policy
+llm/          Azure OpenAI client, tiered model routing, trusted deployment, content safety scan
 research/    Exa and Firecrawl integration
 io/          file loading, writing, directory conventions
 validation/  schema checks, required file checks, output checks
@@ -736,6 +736,55 @@ The current experience indicates:
 - GPT-5.5 is preferred for major synthesis
 - GPT-5.5 Nano may be useful for quick validation and small transforms
 - Grok should not be a default model route based on current observed quality
+
+---
+
+## Content Filter Architecture — Trusted Pipeline
+
+Azure OpenAI deployments include Prompt Shields (jailbreak detection) by default. The epistemic anchor and EARL system prompts contain large volumes of behavioral constraint language ("must not", "never", "do not") that triggers jailbreak false positives on the reasoning-tier deployment.
+
+The solution is a two-deployment architecture with a single trust boundary:
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│  Module 1 — TRUST BOUNDARY                                          │
+│                                                                     │
+│  1. Prompt Shields scan (Azure AI Content Safety API)               │
+│     → Scans human-authored context input before pipeline ingestion  │
+│     → Halts pipeline on detection                                   │
+│                                                                     │
+│  2. LLM calls on DEFAULT deployment (Prompt Shields ON)             │
+│     → Normalize and review human content with full protection       │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Modules 2–6 — TRUSTED PIPELINE                                     │
+│                                                                     │
+│  All LLM calls use `aoai-gpt55-trusted` deployment                  │
+│  (Prompt Shields OFF, harm filters at default Medium)               │
+│                                                                     │
+│  Content is entirely pipeline-generated — no human input,           │
+│  no external documents. Already passed Module 1 scan.               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Decisions
+
+- **Prompt Shields for direct attacks OFF** on the trusted deployment. All harm category filters and protected material filters remain at platform defaults.
+- **Standalone Prompt Shields scan** at Module 1 via the Azure AI Content Safety REST API. This is separate from per-deployment filters — it's an explicit API call before any LLM inference.
+- **CONTENT_SAFETY_KEY** is stored in Azure Key Vault (`kv-aidc-eus2`), fetched at startup via `az keyvault secret show`. Mirrors the AIDC `fetch-secrets.sh` pattern.
+- **Fail-loud startup validation**: all required env vars (`AZURE_OPENAI_TRUSTED_DEPLOYMENT`, `CONTENT_SAFETY_ENDPOINT`) and Key Vault secrets are validated before any LLM or API call. Missing config fails at boot, not at first inference.
+
+### Azure Resources
+
+| Resource | Name | Purpose |
+|----------|------|---------|
+| RAI Content Filter | `aidc-trusted-author-filter` | Jailbreak OFF, all else default |
+| GPT-5.5 Deployment | `aoai-gpt55-trusted` | Trusted deployment with above filter |
+| Content Safety | `aidc-content-safety` | Standalone Prompt Shields API for Module 1 |
+| Key Vault Secret | `content-safety-key` in `kv-aidc-eus2` | Content Safety API key |
+
+See `.planning/issues/azure_trusted_deployment_spec.md` for full configuration details.
 
 ---
 

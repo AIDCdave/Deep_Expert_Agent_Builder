@@ -111,7 +111,7 @@ def load_inputs(state: PipelineState) -> dict:
 def extract_fields(state: PipelineState) -> dict:
     """Pass 0 — Extract TARGET_DOMAIN and RESEARCHER_DOMAIN from context doc."""
     tracker: TokenTracker = state["tracker"]
-    llm = get_llm("general", callbacks=[tracker])
+    llm = get_llm("general", trusted=True, callbacks=[tracker])
 
     response = llm.invoke([
         SystemMessage(content=EXTRACT_SYSTEM),
@@ -146,7 +146,7 @@ def extract_fields(state: PipelineState) -> dict:
 def review_prompt(state: PipelineState) -> dict:
     """Pass 1 — Review filled prompt for coherence with context document."""
     tracker: TokenTracker = state["tracker"]
-    llm = get_llm("worker-bee", callbacks=[tracker])
+    llm = get_llm("worker-bee", trusted=True, callbacks=[tracker])
 
     user_content = (
         "## Filled Research Prompt\n\n"

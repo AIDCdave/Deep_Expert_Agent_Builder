@@ -46,6 +46,9 @@ Automate the full lifecycle of creating a deep expert agent — from "why do we 
 - **LLM:** Direct Azure Cognitive Services (AzureChatOpenAI)
 - **Endpoint:** `https://dave-mot32g5b-eastus2.cognitiveservices.azure.com`
 - **Models:** GPT-5.5 (synthesis + cleanup), GPT-5.4-nano (fast/mechanical)
+- **Trusted deployment:** `aoai-gpt55-trusted` (Prompt Shields OFF) for Modules 2–6
+- **Content Safety:** `aidc-content-safety` (Prompt Shields scan at Module 1 trust boundary)
+- **Key Vault:** `kv-aidc-eus2` (CONTENT_SAFETY_KEY stored as secret)
 - **Research:** Exa (search), Firecrawl (extraction)
 - **Framework:** LangGraph StateGraph for stage internals
 - **Proven pattern:** Stage 4 (Epistemic Anchor) ported from AIDC_Agent_Builder
@@ -68,10 +71,13 @@ Automate the full lifecycle of creating a deep expert agent — from "why do we 
 | 7 phases (6 stages + orchestrator) | Each stage = one phase, orchestrator last | Active |
 | GPT-5.5 for synthesis, Nano for mechanical | Cost optimization with quality preservation | Active |
 | File-driven, no database | Inspectable, reproducible, simple | Active |
+| Two-deployment trust architecture | Module 1 scans human input (Shields ON); Modules 2–6 use trusted deployment (Shields OFF) | Active |
+| Key Vault for sensitive keys | CONTENT_SAFETY_KEY fetched at runtime, not in env vars | Active |
+| Fail-loud startup validation | Missing config fails at boot, not at first inference | Active |
 | EARL as runtime-neutral layer | Decouples agent definition from deployment target | Active |
 | Context Normalizer + Hardened Template | Stage 1 uses hardened LLM prompt with explicit output contract | Active |
 | Structured error handling | Normalizer returns parseable ERROR with missing fields / conflicts | Active |
 | Clean pipeline boundaries | Each stage output is sole input to next; no source content carried forward | Active |
 
 ---
-*Last updated: 2026-05-26*
+*Last updated: 2026-05-27*

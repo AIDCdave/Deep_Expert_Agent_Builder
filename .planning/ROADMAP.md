@@ -2,7 +2,7 @@
 
 **Project:** Deep Expert Agent Builder
 **Milestone:** v1.0
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-27
 
 ## Phase 1: DEA Context Creation
 
@@ -66,7 +66,7 @@
 - Token tracking + cost analytics
 - Execution trace
 
-**Status:** not started (code exists, needs integration)
+**Status:** complete
 
 ---
 
@@ -78,12 +78,12 @@
 - EARL package generation (system prompt, behavior contract, tool policy, safety boundaries)
 - Knowledge pack manifest
 - Evaluation seed set
-- Two-pass: generate → align
-- Output: `05_earl/output/earl_agent_package.md` + supporting artifacts
-- Validation report
+- Multi-pass: identity → system prompt → knowledge factoring → reconciliation → realignment → audit
+- Trusted deployment (Prompt Shields OFF) for all LLM calls
+- Output: `05_earl/output/` (identity, system prompt, knowledge files, eval data)
 - Execution trace
 
-**Status:** not started
+**Status:** complete
 
 ---
 
@@ -134,4 +134,4 @@ Python owns orchestration. The LLM owns synthesis. This pipeline is a determinis
 
 ---
 *Roadmap for: Deep Expert Agent Builder v1.0*
-*Updated: 2026-05-20*
+*Updated: 2026-05-27*

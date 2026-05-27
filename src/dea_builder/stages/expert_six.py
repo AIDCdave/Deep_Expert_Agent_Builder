@@ -190,7 +190,7 @@ def run_stage(workspace_dir: Path) -> Path:
     # PASS 0 — Generate Exa query
     # ------------------------------------------------------------------
     console.print("\n[bold]Pass 0:[/bold] Generating Exa search query...")
-    llm = get_llm("reasoning", callbacks=[tracker])
+    llm = get_llm("reasoning", trusted=True, callbacks=[tracker])
 
     response = llm.invoke([
         SystemMessage(content=PASS0_SYSTEM),

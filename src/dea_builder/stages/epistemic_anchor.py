@@ -214,7 +214,7 @@ def generate_anchor(state: AnchorState) -> dict[str, Any]:
 
     tracker = TokenTracker()
     tracker.set_current_node("generate_anchor")
-    llm = get_llm("reasoning", callbacks=[tracker])
+    llm = get_llm("reasoning", trusted=True, callbacks=[tracker])
 
     t0 = time.monotonic()
     response = llm.invoke([SystemMessage(content=system_msg), HumanMessage(content=human_msg)])
@@ -283,7 +283,7 @@ def optimize_anchor(state: AnchorState) -> dict[str, Any]:
 
     tracker = TokenTracker()
     tracker.set_current_node("optimize_anchor")
-    llm = get_llm("reasoning", callbacks=[tracker])
+    llm = get_llm("reasoning", trusted=True, callbacks=[tracker])
 
     t0 = time.monotonic()
     response = llm.invoke([SystemMessage(content=system_msg), HumanMessage(content=human_msg)])
