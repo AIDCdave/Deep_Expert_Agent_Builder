@@ -38,6 +38,7 @@ TIER_CONFIG: dict[TierName, dict] = {
     },
 }
 
+
 # ---------------------------------------------------------------------------
 # Environment helpers
 # ---------------------------------------------------------------------------
@@ -72,6 +73,7 @@ def _load_env() -> tuple[str, str, str]:
 def get_llm(
     tier: TierName,
     *,
+    trusted: bool = False,
     callbacks: list | None = None,
     max_retries: int = 3,
 ) -> AzureChatOpenAI:
@@ -81,6 +83,10 @@ def get_llm(
     ----------
     tier : "worker-bee" | "general" | "reasoning"
         Model tier to use.
+    trusted : bool
+        If True and tier is "reasoning", use the trusted deployment
+        (Prompt Shields OFF). Used for Stages 2+ where all content
+        is pipeline-generated and has already passed the Module 1 scan.
     callbacks : list, optional
         LangChain callback handlers (e.g. token tracker).
     max_retries : int
@@ -89,12 +95,22 @@ def get_llm(
     endpoint, api_key, api_version = _load_env()
     cfg = TIER_CONFIG[tier]
 
+    deployment = cfg["deployment"]
+    if trusted and cfg.get("reasoning"):
+        deployment = os.getenv("AZURE_OPENAI_TRUSTED_DEPLOYMENT", "")
+        if not deployment:
+            raise EnvironmentError(
+                "AZURE_OPENAI_TRUSTED_DEPLOYMENT must be set. This identifies the "
+                "trusted GPT-5.5 deployment (Prompt Shields OFF) used by Modules 2-N. "
+                "See .planning/issues/azure_trusted_deployment_spec.md Item 2 for setup."
+            )
+
     kwargs: dict = {
         "azure_endpoint": endpoint,
         "api_key": api_key,
         "api_version": api_version,
-        "azure_deployment": cfg["deployment"],
-        "model": cfg["deployment"],  # explicit — Grok rejects model:null
+        "azure_deployment": deployment,
+        "model": deployment,  # explicit — Grok rejects model:null
         "temperature": cfg["temperature"],
         "max_retries": max_retries,
         "callbacks": callbacks or [],

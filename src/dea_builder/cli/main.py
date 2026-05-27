@@ -26,6 +26,8 @@ def main() -> None:
         _run_expert_six(args[1:])
     elif command == "anchor":
         _run_anchor(args[1:])
+    elif command == "earl":
+        _run_earl(args[1:])
     else:
         console.print(f"[red]Unknown command:[/red] {command}")
         _print_usage()
@@ -65,6 +67,7 @@ def _run_dea_context(args: list[str]) -> None:
         console.print(f"[red]Error:[/red] workspace not found: {workspace_path}")
         sys.exit(1)
 
+    from dea_builder.llm.content_safety import PromptInjectionError
     from dea_builder.stages.dea_context import NormalizationError, run_stage
 
     try:
@@ -72,6 +75,14 @@ def _run_dea_context(args: list[str]) -> None:
     except FileNotFoundError as exc:
         console.print(f"\n[red]Error:[/red] {exc}")
         sys.exit(1)
+    except PromptInjectionError as exc:
+        console.print(f"\n[bold red]REJECTED:[/bold red] {exc}")
+        console.print(
+            "\n[yellow]Resolution:[/yellow] Review the context document for "
+            "prompt-injection patterns and resubmit. See working/prompt_shield_rejection.json "
+            "for details."
+        )
+        sys.exit(3)
     except NormalizationError as exc:
         console.print(f"\n[red]Error:[/red] {exc}")
         console.print(
@@ -148,6 +159,31 @@ def _run_anchor(args: list[str]) -> None:
 
     try:
         run_pipeline(workspace_path)
+    except FileNotFoundError as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(1)
+    except (ValueError, EnvironmentError) as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(2)
+
+
+def _run_earl(args: list[str]) -> None:
+    """Run Stage 5 — EARL Agent Package Creation."""
+    if not args:
+        console.print("[red]Error:[/red] workspace path required")
+        console.print("  Usage: dea-builder earl <workspace_path>")
+        sys.exit(1)
+
+    workspace_path = Path(args[0]).resolve()
+
+    if not workspace_path.is_dir():
+        console.print(f"[red]Error:[/red] workspace not found: {workspace_path}")
+        sys.exit(1)
+
+    from dea_builder.stages.earl import run_pipeline as run_earl_pipeline
+
+    try:
+        run_earl_pipeline(workspace_path)
     except FileNotFoundError as exc:
         console.print(f"\n[red]Error:[/red] {exc}")
         sys.exit(1)

@@ -27,6 +27,10 @@ from dea_builder.io.workspace import (
     write_working_artifact,
 )
 from dea_builder.llm.client import get_llm
+from dea_builder.llm.content_safety import (
+    PromptInjectionError,
+    scan_for_prompt_injection,
+)
 
 console = Console()
 
@@ -74,6 +78,7 @@ class ContextState(TypedDict, total=False):
     normalizer_prompt: str
     hardened_template: str
     system_prompt: str
+    prompt_shield_passed: bool
     v0_normalized: str
     v1_reviewed: str
     trace_records: list[dict[str, Any]]
@@ -131,6 +136,68 @@ def input_assembly(state: ContextState) -> dict:
         "normalizer_prompt": normalizer_prompt,
         "hardened_template": hardened_template,
         "system_prompt": system_prompt,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Task 2b: Prompt Shields Scan (trust boundary)
+# ---------------------------------------------------------------------------
+
+
+def prompt_shield_scan(state: ContextState) -> dict:
+    """Scan assembled human-authored input for prompt-injection risk.
+
+    This is the single trust boundary in the pipeline. If the scan passes,
+    all downstream stages use the trusted deployment (Prompt Shields OFF).
+    If the scan fails, the pipeline halts with a PromptInjectionError.
+    """
+    console.print("\n[bold cyan]Prompt Shield:[/bold cyan] Scanning context inputs...")
+
+    workspace = Path(state["workspace_dir"])
+    assembled = state["assembled_input"]
+
+    start = time.time()
+    result = scan_for_prompt_injection(assembled)
+    elapsed = time.time() - start
+
+    trace_record = {
+        "node": "prompt_shield_scan",
+        "status": "pass" if not result.attack_detected else "fail",
+        "chunks_scanned": result.chunks_scanned,
+        "flagged_chunks": result.flagged_chunks,
+        "latency_s": elapsed,
+    }
+
+    if result.attack_detected:
+        # Write error artifact for audit
+        import json
+
+        error_report = {
+            "reason": "prompt_injection_risk",
+            "chunks_scanned": result.chunks_scanned,
+            "flagged_chunks": result.flagged_chunks,
+            "raw_responses": result.raw_responses,
+        }
+        write_working_artifact(
+            workspace, STAGE_NUM, "prompt_shield_rejection.json",
+            json.dumps(error_report, indent=2),
+        )
+        console.print(
+            f"  [bold red]REJECTED:[/bold red] {len(result.flagged_chunks)} chunk(s) flagged. "
+            f"See working/prompt_shield_rejection.json"
+        )
+        raise PromptInjectionError(
+            result=result,
+            document_path=str(workspace / "00_inputs"),
+        )
+
+    console.print(
+        f"  [green]\u2713[/green] All {result.chunks_scanned} chunk(s) clean — {elapsed:.1f}s"
+    )
+
+    return {
+        "prompt_shield_passed": True,
+        "trace_records": state.get("trace_records", []) + [trace_record],
     }
 
 
@@ -323,8 +390,11 @@ def build_graph() -> StateGraph:
     graph.add_node("normalize", normalize)
     graph.add_node("review", review)
 
+    graph.add_node("prompt_shield_scan", prompt_shield_scan)
+
     graph.set_entry_point("input_assembly")
-    graph.add_edge("input_assembly", "normalize")
+    graph.add_edge("input_assembly", "prompt_shield_scan")
+    graph.add_edge("prompt_shield_scan", "normalize")
     graph.add_edge("normalize", "review")
     graph.add_edge("review", END)
 
@@ -380,6 +450,7 @@ def run_stage(workspace_dir: Path) -> dict[str, Any]:
         "normalizer_prompt": "",
         "hardened_template": "",
         "system_prompt": "",
+        "prompt_shield_passed": False,
         "v0_normalized": "",
         "v1_reviewed": "",
         "trace_records": [],
