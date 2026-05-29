@@ -697,7 +697,7 @@ def pass5_audit(
     working_dir: Path,
 ) -> tuple[str, dict]:
     """Full audit of the complete EARL package."""
-    console.print("\n[bold]Pass 5:[/bold] Full audit (general)...")
+    console.print("\n[bold]Pass 5:[/bold] Full audit (reasoning)...")
 
     kf_block = ""
     for fname, content in zip(knowledge_filenames, knowledge_contents):
@@ -712,7 +712,7 @@ def pass5_audit(
         f"=== CONTEXT DOCUMENT ===\n{context_text}"
     )
 
-    text, trace = _call_llm("general", PASS5_SYSTEM, human, node_name="pass5_audit")
+    text, trace = _call_llm("reasoning", PASS5_SYSTEM, human, node_name="pass5_audit")
     _save(working_dir, "pass5_audit.md", text)
     console.print(f"  Audit: {len(text):,} chars")
     return text, trace
