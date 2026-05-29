@@ -1,0 +1,15 @@
+# LiteLLM Proxy Configuration for PAS Smoke Testing
+# Secrets are fetched from Azure Key Vault at startup (see scripts/start-litellm.sh)
+# DO NOT put actual keys in this file.
+
+model_list:
+  - model_name: general
+    litellm_params:
+      model: azure/aoai-gpt55-trusted
+      api_base: ${AZURE_OPENAI_ENDPOINT}
+      api_key: ${AZURE_OPENAI_API_KEY}
+      api_version: "2025-04-01-preview"
+
+general_settings:
+  master_key: ${LITELLM_MASTER_KEY}
+  port: 4000

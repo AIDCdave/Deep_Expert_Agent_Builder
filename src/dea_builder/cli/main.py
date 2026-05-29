@@ -28,6 +28,8 @@ def main() -> None:
         _run_anchor(args[1:])
     elif command == "earl":
         _run_earl(args[1:])
+    elif command == "package":
+        _run_package(args[1:])
     else:
         console.print(f"[red]Unknown command:[/red] {command}")
         _print_usage()
@@ -48,7 +50,7 @@ def _print_usage() -> None:
         "  expert-six        Stage 3 — Execute and finalize Expert Six (coming)\n"
         "  anchor            Stage 4 — Create epistemic anchor (coming)\n"
         "  earl              Stage 5 — Create EARL agent package (coming)\n"
-        "  package           Stage 6 — Target deployment packaging (coming)\n"
+        "  package           Stage 6 — Target deployment packaging\n"
         "  run               Run full pipeline (coming)\n"
         "  plan              Planning mode (coming)\n"
     )
@@ -184,6 +186,49 @@ def _run_earl(args: list[str]) -> None:
 
     try:
         run_earl_pipeline(workspace_path)
+    except FileNotFoundError as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(1)
+    except (ValueError, EnvironmentError) as exc:
+        console.print(f"\n[red]Error:[/red] {exc}")
+        sys.exit(2)
+
+
+def _run_package(args: list[str]) -> None:
+    """Run Stage 6 — Target Deployment Packaging."""
+    if not args:
+        console.print("[red]Error:[/red] workspace path required")
+        console.print(
+            "  Usage: dea-builder package <workspace_path> "
+            "[--targets <list>] [--output <dir>]"
+        )
+        sys.exit(1)
+
+    workspace_path = Path(args[0]).resolve()
+
+    if not workspace_path.is_dir():
+        console.print(f"[red]Error:[/red] workspace not found: {workspace_path}")
+        sys.exit(1)
+
+    # Parse optional --targets and --output flags
+    targets = None
+    output_root = None
+    i = 1
+    while i < len(args):
+        if args[i] == "--targets" and i + 1 < len(args):
+            targets = [t.strip() for t in args[i + 1].split(",")]
+            i += 2
+        elif args[i] == "--output" and i + 1 < len(args):
+            output_root = Path(args[i + 1]).resolve()
+            i += 2
+        else:
+            console.print(f"[red]Error:[/red] unknown argument: {args[i]}")
+            sys.exit(1)
+
+    from dea_builder.stages.target_deploy import run_pipeline as run_package_pipeline
+
+    try:
+        run_package_pipeline(workspace_path, targets=targets, output_root=output_root)
     except FileNotFoundError as exc:
         console.print(f"\n[red]Error:[/red] {exc}")
         sys.exit(1)
