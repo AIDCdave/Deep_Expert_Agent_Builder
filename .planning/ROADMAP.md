@@ -2,7 +2,7 @@
 
 **Project:** Deep Expert Agent Builder
 **Milestone:** v1.0
-**Last updated:** 2026-05-27
+**Last updated:** 2026-05-29
 
 ## Phase 1: DEA Context Creation
 
@@ -89,17 +89,21 @@
 
 ## Phase 6: Target Deployment Packaging
 
-**Goal:** Adapt EARL package for specific runtime targets via thin adapter layer.
+**Goal:** Convert EARL output into deployment-ready packages for 7 target platforms with provenance stamping and fidelity inspection.
 
 **Delivers:**
-- Adapter interface definition
-- First concrete adapter (ChatGPT Custom GPT or equivalent)
-- Target-specific artifact transformation
-- Validation checklist per deployment
-- Output: `06_deployments/<target_name>/`
-- Deployment trace
+- 4-phase pipeline: input assembly → PAS generation → parallel target conversion → fidelity inspection
+- Portable Agent Spec (PAS) — always-on, model-agnostic, OpenAI Chat Completions contract
+- 7 targets: PAS, ChatGPT Custom GPT (copy from EARL), OpenAI Responses API, Claude, Gemma 4, Hermes Agent, Grok
+- Per-target prompt files (`src/dea_builder/prompts/stage6/`)
+- Provenance stamping (source_hash, adl_version, generated_at) on all packages
+- Fidelity inspection pass — cross-target semantic drift detection
+- CLI: `dea-builder package <workspace> [--targets <list>] [--output <dir>]`
+- LiteLLM config for PAS smoke testing (`litellm.config.yaml` + `scripts/start-litellm.sh`)
+- Output: `06_deployments/output/{portable_agent_spec,chatgpt_custom_gpt,openai_responses,claude,gemma,hermes,grok}/`
+- Execution trace
 
-**Status:** not started
+**Status:** complete
 
 ---
 
@@ -134,4 +138,4 @@ Python owns orchestration. The LLM owns synthesis. This pipeline is a determinis
 
 ---
 *Roadmap for: Deep Expert Agent Builder v1.0*
-*Updated: 2026-05-27*
+*Updated: 2026-05-29*

@@ -4,7 +4,7 @@
 
 The AIDC DEA Builder is a file-driven, multi-stage pipeline for creating **Deep Expert Agents (DEAs)**.
 
-It converts structured intent-capture material into a deployment-ready agent package through six explicit stages:
+It converts structured intent-capture material into a deployment-ready agent package through seven stages:
 
 1. **DEA Context Creation**
 2. **Expert Six Prompt Creation**
@@ -12,6 +12,7 @@ It converts structured intent-capture material into a deployment-ready agent pac
 4. **Epistemic Anchor Creation**
 5. **EARL Agent Package Creation**
 6. **Target Deployment Packaging**
+7. **Main Orchestrator** (pending)
 
 The first implementation should remain intentionally simple:
 
@@ -469,61 +470,141 @@ This separation preserves reversibility. If a deployment surface changes, only S
 
 ### Purpose
 
-Stage 6 adapts the completed EARL package for a target deployment scenario.
+Stage 6 converts the EARL output (`agent.adl.yaml` + `chatgpt_custom_gpt/`) into deployment-ready packages for multiple target platforms. It produces a Portable Agent Spec (PAS) as the always-on model-agnostic output, then generates platform-specific packages in parallel, followed by a cross-target fidelity inspection.
 
-This stage is intentionally thin in the architecture document. The specific target formats will evolve during implementation.
+### Pipeline
 
-Initial likely targets include:
+```text
+Phase 0 — Input Assembly + ADL Validation
+Phase 1 — PAS Generation (always, first)
+Phase 2 — Parallel Target Conversion Pipes
+Phase 3 — Fidelity Inspection Pass
+```
 
-- ChatGPT Custom GPT
-- ChatGPT Assistant
-- Claude/Claude Opus project-style deployment
-- Gemma-based local or hosted deployment
-- Generic Agent Definition Language (ADL)
+### Targets (7)
+
+| Target | Type | Key Characteristics |
+|---|---|---|
+| `pas` | Model-agnostic | OpenAI Chat Completions contract, always produced first |
+| `chatgpt-custom-gpt` | Copy + stamp | Copied from EARL, provenance stamped |
+| `openai-responses` | Model-bound | OpenAI Responses API, `responses.create` envelope |
+| `claude` | Model-bound | XML-segmented prompts, Anthropic tool-use format |
+| `gemma-4` | Model-bound | Open model, explicit runtime manifest + model config |
+| `hermes` | Runtime framework | SOUL.md + AGENTS.md + config.yaml conventions |
+| `grok` | Model-bound | xAI Responses API, built-in tools (web_search, x_search) |
+
+Key distinctions:
+
+- **Hermes** is a runtime framework (model-agnostic), not a model. It has specific file conventions (SOUL.md for identity, AGENTS.md for project context, config.yaml for runtime).
+- **Grok** is model-bound (xAI), uses the Responses API at `api.x.ai/v1`, and has unique built-in tools (`x_search`, `collections_search`).
+- Hermes and Grok are fully independent targets — never conflated.
 
 ### Inputs
 
 ```text
 05_earl/
   output/
-    earl_agent_package.md
-    canonical_system_prompt.md
-    knowledge_pack_manifest.json
-    tool_policy.md
-    safety_boundaries.md
-    eval_seed_set.md
-
-06_deployments/
-  deployment_profile.yaml
+    agent.adl.yaml                              # Canonical agent definition
+    chatgpt_custom_gpt/
+      02_instructions/system_prompt.md           # Source system prompt
+      03_knowledge/*.md                          # Knowledge files
+      05_actions/                                # Tool/action definitions
 ```
+
+Pipe inputs per target: system prompt + knowledge manifest (names/descriptions only, not full content) + tools + PAS as reference. Full knowledge file content is NOT sent to reduce cost.
 
 ### Outputs
 
 ```text
 06_deployments/
-  <target_name>/
-    packaged_agent_artifacts
-    validation_checklist.md
-    deployment_trace.json
+  output/
+    portable_agent_spec/
+      pas.yaml
+      system_prompt.md
+      README.md
+    chatgpt_custom_gpt/                          # Full copy from EARL + provenance.yaml
+    openai_responses/
+      responses_request.yaml
+      system_prompt.md
+      tools.yaml
+      knowledge_manifest.yaml
+      README.md
+    claude/
+      system_prompt.md
+      tools.yaml
+      knowledge_manifest.yaml
+      deployment_manifest.yaml
+      eval_plan.yaml
+    gemma/
+      prompt.txt
+      model_config.yaml
+      knowledge_manifest.yaml
+      runtime_manifest.yaml
+      eval_plan.yaml
+    hermes/
+      SOUL.md
+      AGENTS.md
+      config.yaml
+      tools_manifest.yaml
+      knowledge_manifest.yaml
+      README.md
+    grok/
+      system_prompt.md
+      responses_request.yaml
+      functions.yaml
+      knowledge_manifest.yaml
+      deployment_manifest.yaml
+      README.md
+    fidelity_report.md
+  working/
+    execution_trace.json
+    *_raw_response.md                            # Per-target raw LLM responses
 ```
 
-### Notes
+### Provenance
 
-Stage 6 should be implemented as an adapter layer.
+Every generated package includes a provenance block:
 
-The architecture should define the adapter interface, not prematurely define every target package in detail.
-
-Each adapter should:
-
-```text
-1. validate EARL input compatibility
-2. apply target-specific constraints
-3. transform the canonical package
-4. write target-specific artifacts
-5. produce a validation checklist
+```yaml
+provenance:
+  source_adl_file: agent.adl.yaml
+  adl_version: "1.0"
+  source_hash: <sha256 of agent.adl.yaml>
+  generated_at: <ISO 8601 UTC>
+  generator: dea-builder/phase6
 ```
 
-The first concrete implementation should target the deployment surface currently in use. Other adapters should remain skeletal until real deployment constraints are known.
+### Fidelity Inspection
+
+The inspection pass validates ALL generated targets against the source ADL and system prompt. It checks:
+
+- Role, scope, persona, constraint preservation
+- Tool boundary preservation (no invented capabilities)
+- Knowledge reference preservation
+- Output contract preservation
+- Platform-specific correctness (adaptations vs behavioral changes)
+
+Severity: PASS (faithful), WARN (minor gaps/assumptions), FAIL (semantic drift).
+
+### CLI
+
+```bash
+# All targets (default)
+dea-builder package <workspace>
+
+# Specific targets
+dea-builder package <workspace> --targets pas,claude,grok
+
+# Custom output directory
+dea-builder package <workspace> --output /path/to/output
+```
+
+### Implementation
+
+- **Stage module:** `src/dea_builder/stages/target_deploy.py`
+- **Prompt files:** `src/dea_builder/prompts/stage6/{pas,openai_responses,claude,gemma,hermes,grok,fidelity_inspection}.md`
+- **LLM tier:** Reasoning (GPT-5.5 trusted) for all generation and inspection passes
+- **LiteLLM:** `litellm.config.yaml` + `scripts/start-litellm.sh` for PAS smoke testing
 
 ---
 
@@ -560,12 +641,12 @@ uv run python -m aidc_builder run ./workspaces/<dea_name> --target chatgpt-custo
 ### Stage-Specific CLI
 
 ```bash
-uv run python -m aidc_builder dea-context ./workspaces/<dea_name>
-uv run python -m aidc_builder expert-six-prompt ./workspaces/<dea_name>
-uv run python -m aidc_builder expert-six ./workspaces/<dea_name>
-uv run python -m aidc_builder anchor ./workspaces/<dea_name>
-uv run python -m aidc_builder earl ./workspaces/<dea_name>
-uv run python -m aidc_builder package ./workspaces/<dea_name> --target chatgpt-custom-gpt
+dea-builder dea-context ./workspaces/<dea_name>
+dea-builder expert-six-prompt ./workspaces/<dea_name>
+dea-builder expert-six ./workspaces/<dea_name>
+dea-builder anchor ./workspaces/<dea_name>
+dea-builder earl ./workspaces/<dea_name>
+dea-builder package ./workspaces/<dea_name> [--targets pas,claude,grok] [--output <dir>]
 ```
 
 ### Planning Mode
@@ -673,7 +754,7 @@ aidc_builder/
     expert_six.py
     epistemic_anchor.py
     earl.py
-    deployment_package.py
+    target_deploy.py
   llm/
   research/
   io/
@@ -881,7 +962,7 @@ Those can be considered later if the file-driven pipeline proves stable and usef
 
 ## Architecture Summary
 
-The AIDC DEA Builder is a six-stage, file-driven artifact factory for creating Deep Expert Agents.
+The AIDC DEA Builder is a seven-stage, file-driven artifact factory for creating Deep Expert Agents.
 
 The key design choices are:
 
