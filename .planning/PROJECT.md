@@ -20,16 +20,16 @@ Automate the full lifecycle of creating a deep expert agent — from "why do we 
 ### Active
 
 - [x] 6-stage pipeline: DEA Context → Expert Six Prompt → Expert Six → Anchor → EARL → Deployment
-- [ ] Main orchestrator coordinates all stages with resumability
+- [x] Main orchestrator coordinates all stages with resumability
 - [ ] Workspace layout: `workspaces/<dea_name>/00_inputs/` through `06_deployments/`
 - [ ] Configuration-driven model routing (synthesis, cleanup, fast)
 - [x] Stage-specific CLI: `dea-builder <stage> <workspace>`
-- [ ] Full pipeline CLI: `uv run python -m dea_builder run <workspace>`
-- [ ] Planning mode: `uv run python -m dea_builder plan <workspace>`
+- [x] Full pipeline CLI: `dea-builder run <workspace>`
+- [x] Planning mode: `dea-builder plan <workspace>`
 - [x] Execution trace per stage + pipeline-level trace
 - [ ] Deterministic validation (Python) + judgment validation (LLM) separation
-- [ ] Stage skip when outputs already valid
-- [ ] Forced re-run of specific stages
+- [x] Stage skip when outputs already valid
+- [x] Forced re-run of specific stages (`--force-stage N`)
 
 ### Out of Scope
 
@@ -82,4 +82,4 @@ Automate the full lifecycle of creating a deep expert agent — from "why do we 
 | Clean pipeline boundaries | Each stage output is sole input to next; no source content carried forward | Active |
 
 ---
-*Last updated: 2026-05-29*
+*Last updated: 2026-06-01*

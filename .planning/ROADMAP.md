@@ -112,16 +112,20 @@
 **Goal:** Coordinate full pipeline end-to-end with stage sequencing, skip logic, and resumability.
 
 **Delivers:**
-- `uv run python -m dea_builder run <workspace>` — full pipeline
-- `uv run python -m dea_builder plan <workspace>` — planning mode
-- `uv run python -m dea_builder <stage> <workspace>` — individual stages
-- Stage dependency validation
+- `dea-builder run <workspace>` — full pipeline (Stages 1–6)
+- `dea-builder plan <workspace>` — planning mode (dry-run, shows what would execute)
+- `dea-builder <stage> <workspace>` — individual stages (all 6 working)
+- Stage dependency validation (each stage checks upstream canonical outputs)
 - Skip completed stages (output already valid)
-- Forced re-run (`--force-stage <N>`)
-- Top-level pipeline trace linking all stage traces
-- Cost summary across all stages
+- Forced re-run (`--force-stage <N>`, repeatable)
+- `--start-stage N` — skip earlier stages if complete
+- `--skip-package` — skip Stage 6 entirely
+- `--targets <list>` — pass-through to Stage 6
+- Pipeline summary table (per-stage status, time)
+- Pipeline trace (`runs/last_pipeline_trace.json`)
+- Implementation: `src/dea_builder/stages/orchestrator.py`
 
-**Status:** not started
+**Status:** complete
 
 ---
 
